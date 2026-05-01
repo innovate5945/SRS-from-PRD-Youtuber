@@ -437,6 +437,8 @@ sequenceDiagram
 | REQ-NF-014 | 뇌동매매 리포트 정확도 >= 99% | 주간 리포트 대비 | Story 1 |
 | REQ-NF-015 | 타점-뉴스 매칭 정확도 >= 95% | 복기 일지 건수 대비 | Story 2 |
 | REQ-NF-016 | 통합 대시보드 정합성 >= 99.9% | 복수 증권사 합산 | Story 3 |
+| REQ-NF-016a | 시스템 장애 시 RTO (복구 시간 목표) <= 4시간 | 재해 복구 훈련 시나리오 | PRD S5 |
+| REQ-NF-016b | 데이터 손실 허용 기준 RPO (복구 시점 목표) <= 1시간 | DB 스냅샷 주기 | PRD S5 |
 
 #### 4.2.4 보안 (Security)
 
@@ -449,6 +451,7 @@ sequenceDiagram
 | REQ-NF-021 | 분기 1회 3rd-party 침투 테스트 | 외부 보안 업체 | PRD S5 |
 | REQ-NF-022 | 연 1회 ISMS 갱신 심사 | 인증 기관 | PRD S5 |
 | REQ-NF-023 | RBAC 관리자/일반 사용자 권한 분리 | 전체 API 엔드포인트 | ISO 29148 |
+| REQ-NF-023a | 개인정보보호법(PIPA) 및 신용정보법 준수 (데이터 파기, 동의 이력 관리) | 정기 법률 자문 검토 | ISO 29148 |
 
 #### 4.2.5 비용 (Cost)
 
@@ -515,8 +518,8 @@ sequenceDiagram
 | Story 4 (AC-E1) | REQ-FUNC-022 | TC-FUNC-022 | Must |
 | PRD S5 성능 | REQ-NF-001 ~ REQ-NF-008 | TC-NF-001 ~ TC-NF-008 | Must |
 | PRD S5 확장성 | REQ-NF-009, REQ-NF-010 | TC-NF-009, TC-NF-010 | Must |
-| PRD S5 가용성 | REQ-NF-011 ~ REQ-NF-016 | TC-NF-011 ~ TC-NF-016 | Must |
-| PRD S5 보안 | REQ-NF-017 ~ REQ-NF-023 | TC-NF-017 ~ TC-NF-023 | Must |
+| PRD S5 가용성 | REQ-NF-011 ~ REQ-NF-016b | TC-NF-011 ~ TC-NF-016b | Must |
+| PRD S5 보안 | REQ-NF-017 ~ REQ-NF-023a | TC-NF-017 ~ TC-NF-023a | Must |
 | PRD S5 비용 | REQ-NF-024, REQ-NF-025 | TC-NF-024, TC-NF-025 | Must |
 | PRD S5 모니터링 | REQ-NF-026 ~ REQ-NF-030 | TC-NF-026 ~ TC-NF-030 | Must |
 | ADR-002 유지보수 | REQ-NF-031, REQ-NF-032 | TC-NF-031, TC-NF-032 | Should |
@@ -842,7 +845,7 @@ classDiagram
 
 #### 6.3.1 통계 대시보드 + 매매횟수 브레이크 상세 흐름
 
-`mermaid
+```mermaid
 sequenceDiagram
     participant U as 사용자(웹앱)
     participant S as 백엔드 서버
@@ -878,11 +881,11 @@ sequenceDiagram
     S->>DB: 전월 대비 매매 횟수/충동 매매 비율 집계
     S->>S: 월간 리포트 생성 (정확도 >= 99%)
     S-->>U: 월간 리포트 알림
-`
+```
 
 #### 6.3.2 온보딩 → 증권사 연동 → 첫 복기 일지 E2E 흐름
 
-`mermaid
+```mermaid
 sequenceDiagram
     participant U as 사용자(웹앱)
     participant S as 백엔드 서버
@@ -921,11 +924,11 @@ sequenceDiagram
         U->>S: GET /api/v1/reviews/{id}
         S-->>U: 핵심 인사이트 UI (3분 내 복기)
     end
-`
+```
 
 #### 6.3.3 뇌동매매 방지 → 주간 리포트 전체 사이클
 
-`mermaid
+```mermaid
 sequenceDiagram
     participant U as 사용자(웹앱)
     participant S as 백엔드 서버
@@ -959,7 +962,7 @@ sequenceDiagram
     S->>S: 주간 뇌동매매 리포트 생성 (정확도 >= 99%)
     S-->>U: 리포트 이메일/인앱 발송
     S->>S: Mixpanel 이벤트 전송 (unplanned_trade_count)
-`
+```
 
 ### 6.4 Validation Plan
 
