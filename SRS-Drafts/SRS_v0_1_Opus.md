@@ -1,9 +1,10 @@
 # Software Requirements Specification (SRS)
 
 - **Document ID:** SRS-001
-- **Revision:** 1.0
-- **Date:** 2026-04-28
+- **Revision:** 1.1
+- **Date:** 2026-04-29
 - **Standard:** ISO/IEC/IEEE 29148:2018
+- **Tech Stack:** Next.js (App Router) · Supabase · Vercel AI SDK · Google Gemini
 
 ---
 
@@ -22,8 +23,8 @@
 | ID | 범위 항목 |
 |---|---|
 | S-IN-01 | F1. 뇌동매매 방지 강제 제어 (일일 최대 손실폭 알람, 쿨타임) |
-| S-IN-02 | F2. 멀티 증권사 API 통합 연동 (키움·토스·NH) |
-| S-IN-03 | F3. 자동 매매 복기 일지 (타점+차트+뉴스 매칭) |
+| S-IN-02 | F2. 멀티 증권사 API 통합 연동 (한국투자·토스·LS) |
+| S-IN-03 | F3. 자동 매매 복기 일지 (Gemini API 기반 매칭) |
 | S-IN-04 | F5. 통계 대시보드 + 매매횟수 브레이크 |
 | S-IN-05 | 웹 앱 (반응형) |
 
@@ -34,20 +35,27 @@
 | S-OUT-01 | F4. 노코드 백테스트/시그널 알람 | Phase 2 |
 | S-OUT-02 | F6. 24h 파생/코인 타점 모니터링 | Phase 2 |
 | S-OUT-03 | F7. 프리미엄 3분 요약 브리핑 | Phase 3 |
-| S-OUT-04 | 자동 주문 집행 | 규제 이슈로 보류 |
-| S-OUT-05 | 네이티브 모바일 앱 | 향후 |
+| S-OUT-04 | LLM(Gemini) 기반 AI 분석 로직 | MVP에서는 인프라 연동 테스트만 수행 (Phase 2 적용) |
+| S-OUT-05 | 자동 주문 집행 | 규제 이슈로 보류 |
+| S-OUT-06 | 네이티브 모바일 앱 | 향후 |
 
 #### Constraints / Assumptions
 
 | 유형 | ID | 내용 | Kill Criteria | 대응 |
 |---|---|---|---|---|
 | 가정 | ASMP-01 | SOM 3,000~5,000명의 '각성적 학습자'는 월 5만 원 WTP 보유 | Closed Beta(n=300) 유료 전환율 < 3% 또는 Van Westendorp 적정가격 < 2만 원 | 가격 피벗 또는 B2B 모델 전환 |
-| 가정 | ASMP-02 | 키움·토스·NH 3사가 타겟 사용자의 80% 이상 커버 | Beta 중 미지원 증권사 요청 > 30% | 삼성·미래에셋 API 연동 Sprint 4 내 추가 |
+| 가정 | ASMP-02 | 한국투자·토스·LS 3사가 타겟 사용자의 80% 이상 커버 | Beta 중 미지원 증권사 요청 > 30% | 삼성·미래에셋 API 연동 Sprint 4 내 추가 |
 | 의존성 | DEP-01 | 증권사 Open API 안정적 제공 | API 가용률 < 95% (월간) | CSV 수동 업로드 폴백 UI 배포 |
 | 의존성 | DEP-02 | FRED/Statista 데이터 API 가용성 | 데이터 지연 > 1시간 | KRX 공시 대안 파이프라인 구축 |
-| 제약 | CNST-01 | ADR-001: 증권사 연동은 공식 API 우선, 스크래핑 폴백 | — | 법률 자문 사전 확보 |
-| 제약 | CNST-02 | ADR-002: 알람 아키텍처는 SSE(서버 사이드 이벤트) 기반 | Phase 2 양방향 통신 필요 시 | WebSocket 마이그레이션 |
-| 제약 | CNST-03 | ADR-003: 매매 일지는 클라우드 중앙 저장(PostgreSQL + S3) | — | at-rest AES-256 + row-level security |
+| 제약 | C-TEC-001 | 모든 서비스는 Next.js (App Router) 기반 단일 풀스택 프레임워크 구현 | — | 프론트/백엔드 단일 코드베이스 유지 |
+| 제약 | C-TEC-002 | 서버 측 로직은 Next.js Server Actions / Route Handlers로 처리 | — | 별도 백엔드 없이 Vercel 배포 |
+| 제약 | C-TEC-003 | DB는 로컬 SQLite 개발, 배포 시 Supabase(PostgreSQL) 사용 | — | 복잡한 인프라 설정 배제 |
+| 제약 | C-TEC-004 | UI는 Tailwind CSS 및 shadcn/ui 사용으로 일관성 강제 | — | AI 코드 생성 효율성 극대화 |
+| 제약 | C-TEC-005 | LLM(Gemini) 기능은 MVP 런타임에서 제외하고 인프라(AI SDK) 연결만 준비 | — | Phase 2 확장을 위한 테스트용 |
+| 제약 | C-TEC-006 | Vercel Hobby (Free) 플랜 사용으로 일일 Cron Job 최대 1회 제한 | — | 장중 감시/동기화는 클라이언트 폴링으로 대체 |
+| 제약 | C-TEC-007 | 배포 및 인프라는 Vercel로 단일화 (Git Push 자동 배포) | — | CI/CD 파이프라인 수동 구축 제거 |
+| 제약 | CNST-04 | 규제/컴플라이언스: 개인정보보호법 및 금융 가이드라인 준수 | 법적 리스크 발생 | 개인/신용정보 분리 보관 및 법률 자문 확보 |
+| 제약 | CNST-05 | 운영 환경: 최신 모던 브라우저 및 모바일 웹(반응형) 필수 지원 | 모바일 환경 이탈률 > 30% | 반응형(Mobile-First) UI/UX 설계 |
 | 리스크 | RISK-01 | 증권사 API 정책 변경/제한 (확률: 중, 영향: 치명) | — | 스크래핑 폴백 + 복수 증권사 의존도 분산 |
 | 리스크 | RISK-02 | 금융 규제 유사투자자문 (확률: 중, 영향: 치명) | — | 법률 자문 + '정보 제공' vs '자문' 경계 명확화 |
 | 리스크 | RISK-03 | 보안 사고 계좌 정보 유출 (확률: 하, 영향: 치명) | — | ISMS 인증 + 분기 침투 테스트 + 버그바운티 |
@@ -64,7 +72,6 @@
 | DOS | Discovered Opportunity Score — JTBD 인터뷰 기반 발견 기회 점수 |
 | JTBD | Jobs to be Done — 고객이 특정 상황에서 완수하려는 과업 |
 | MDD | Maximum Drawdown — 최대 낙폭 |
-| SSE | Server-Sent Events — 서버→클라이언트 단방향 실시간 이벤트 전송 |
 | WTP | Willingness to Pay — 지불 의사 금액 |
 | SOM | Serviceable Obtainable Market — 실제 확보 가능 시장 |
 | MoSCoW | Must / Should / Could / Won't 우선순위 분류 체계 |
@@ -74,8 +81,8 @@
 | RTO | Recovery Time Objective — 복구 시간 목표 |
 | RBAC | Role-Based Access Control — 역할 기반 접근 제어 |
 | PKCE | Proof Key for Code Exchange — OAuth 2.0 보안 확장 |
-| FCM | Firebase Cloud Messaging — Google 푸시 알림 서비스 |
-| APNs | Apple Push Notification service — Apple 푸시 알림 서비스 |
+| BaaS | Backend as a Service — Supabase 등 관리형 백엔드 서비스 |
+| RLS | Row-Level Security — PostgreSQL 행 수준 보안 정책 |
 
 ### 1.4 References
 
@@ -167,75 +174,55 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph Client["Client Layer"]
-        WEB["웹 앱<br/>(반응형 SPA)"]
+    subgraph Vercel["Vercel Platform (Next.js App Router)"]
+        CLIENT["Client Components<br/>(Tailwind + shadcn/ui)"]
+        SERVER["Server Components & Actions<br/>(API, 로직 처리)"]
+        CRON["Vercel Cron Jobs<br/>(주기적 스케줄링)"]
     end
 
-    subgraph Backend["Backend Services"]
-        API["API Gateway<br/>(REST + SSE)"]
-        AUTH["Auth Service<br/>(OAuth 2.0 PKCE)"]
-        ALERT["Alert Engine<br/>(SSE 기반)"]
-        SYNC["Sync Scheduler<br/>(5분 주기)"]
-        REVIEW["Review Generator<br/>(장 마감 후 트리거)"]
-        REPORT["Report Service<br/>(주간/월간 PDF)"]
-        DASH["Dashboard Aggregator<br/>(통계 집계)"]
+    subgraph Supabase["Supabase (BaaS)"]
+        PG[("PostgreSQL<br/>(DB & RLS)")]
+        REALTIME["Supabase Realtime<br/>(웹소켓 알람)"]
+        STORAGE[("Supabase Storage<br/>(PDF/파일)")]
     end
 
-    subgraph Data["Data Layer"]
-        PG[("PostgreSQL<br/>(RLS + AES-256)")]
-        S3[("AWS S3<br/>(PDF 저장)")]
-        CACHE[("Redis<br/>(세션/캐시)")]
+    subgraph AI["AI Layer"]
+        SDK["Vercel AI SDK"]
+        GEMINI["Google Gemini API"]
     end
 
     subgraph External["External Systems"]
-        KIWOOM["키움 Open API"]
-        TOSS["토스 증권 API"]
-        NH["NH 나무 API"]
-        FCM_SVC["FCM / APNs"]
-        NEWS["매크로 뉴스 API<br/>(내부)"]
-        MIX["Mixpanel"]
-        STRIPE["Stripe"]
-        PD["PagerDuty"]
+        BROKER["증권사 REST API<br/>(한국투자, 토스, LS)"]
+        NEWS["매크로 뉴스 API"]
+        STRIPE["Stripe (결제)"]
     end
 
-    WEB <-->|HTTPS + SSE| API
-    API --> AUTH
-    API --> ALERT
-    API --> DASH
-    API --> REPORT
-    SYNC --> KIWOOM
-    SYNC --> TOSS
-    SYNC --> NH
-    SYNC --> PG
-    ALERT --> FCM_SVC
-    ALERT --> PG
-    REVIEW --> NEWS
-    REVIEW --> PG
-    REVIEW --> S3
-    REPORT --> PG
-    REPORT --> S3
-    DASH --> PG
-    DASH --> CACHE
-    AUTH --> PG
-    API --> MIX
-    API --> STRIPE
-    ALERT --> PD
+    CLIENT <-->|Server Actions| SERVER
+    CLIENT <-->|Subscribe| REALTIME
+    SERVER <--> PG
+    SERVER --> STORAGE
+    SERVER --> REALTIME
+
+    SERVER <--> SDK
+    SDK <--> GEMINI
+
+    SERVER <--> BROKER
+    CRON --> SERVER
+    SERVER <--> NEWS
+    SERVER <--> STRIPE
 ```
 
 ### 3.1 External Systems
 
 | 시스템 | 유형 | 프로토콜 | 용도 | 제약 |
 |---|---|---|---|---|
-| 키움 Open API | 증권사 API | REST + OAuth | 체결 내역, 잔고 조회 | 호출 제한 1회/초 |
-| 토스 증권 API | 증권사 API | REST + 인증 키 | 거래 내역 조회 | 일 5,000회 |
-| NH 나무 API | 증권사 API | REST + 인증 키 | 거래 내역 조회 | 일 10,000회 |
-| FCM (Firebase Cloud Messaging) | 푸시 서비스 | HTTP/2 | Android/웹 푸시 알림 | 지연 ≤ 1초 |
-| APNs (Apple Push Notification) | 푸시 서비스 | HTTP/2 | iOS 푸시 알림 | 지연 ≤ 1초 |
-| Mixpanel | 분석 플랫폼 | REST | 이벤트 추적, 코호트 분석 | — |
+| 한국투자증권 API | 증권사 API | REST + OAuth | 체결 내역, 잔고 조회 | 초당 호출 제한 주의 |
+| 토스증권 API | 증권사 API | REST + 인증 키 | 거래 내역 조회 | 일 5,000회 |
+| LS증권 API | 증권사 API | REST + OAuth | 거래 내역 조회 | 일 10,000회 |
+| Supabase | BaaS | REST/WebSocket | DB(PostgreSQL), Storage, Realtime 알람 | — |
+| Google Gemini API | LLM API | REST | 복기 일지 요약, 타점 분석 로직 연동 | Rate Limit 준수 |
+| Vercel | 플랫폼 | — | Next.js 배포, 서버리스 함수, 크론 | — |
 | Stripe | 결제 플랫폼 | REST | 구독 결제 처리 | PCI DSS 준수 |
-| PagerDuty | 장애 알림 | REST/Webhook | 운영 장애 에스컬레이션 | — |
-| Delighted | NPS 서베이 | REST | 분기별 인앱 NPS 조사 | — |
-| AWS (S3, RDS, Cost Explorer) | 클라우드 인프라 | — | 데이터 저장, DB, 비용 추적 | — |
 
 ### 3.2 Client Applications
 
@@ -243,19 +230,20 @@ flowchart TB
 |---|---|---|
 | 웹 앱 (반응형) | 브라우저 (Chrome, Safari, Firefox, Edge) | MVP v1 유일 클라이언트. 모바일 반응형 지원. |
 
-### 3.3 API Overview
+### 3.3 Server Actions / Route Handlers Overview
 
-| API Endpoint 그룹 | 방향 | 설명 |
+*Next.js Server Actions 및 Route Handlers를 통해 프론트엔드와 백엔드를 통합 연동한다.*
+
+| 모듈/경로 | 방향 | 설명 |
 |---|---|---|
-| `/api/v1/auth/*` | 클라이언트 → 서버 | 인증/인가 (OAuth 2.0 PKCE) |
-| `/api/v1/accounts/*` | 클라이언트 ↔ 서버 ↔ 증권사 | 증권사 계좌 연동, 동기화 |
-| `/api/v1/trades/*` | 서버 → 클라이언트 | 매매 내역 조회, 통합 |
-| `/api/v1/alerts/*` | 클라이언트 ↔ 서버 | 알람 규칙 CRUD, 발동 이력 |
-| `/api/v1/reviews/*` | 서버 → 클라이언트 | 자동 매매 복기 일지 |
-| `/api/v1/dashboard/*` | 서버 → 클라이언트 | 통계 대시보드 데이터 |
-| `/api/v1/reports/*` | 서버 → 클라이언트 | 주간/월간 리포트, PDF |
-| `/sse/alerts` | 서버 → 클라이언트 (SSE) | 실시간 알람 스트리밍 |
-| 내부: 매크로 뉴스 API | 내부 서비스 | 날짜/시간 기반 뉴스 이벤트 매칭 |
+| `actions/auth.ts` | 클라이언트 → 서버 | 사용자 인증 및 세션 관리 (Supabase Auth) |
+| `actions/accounts.ts` | 클라이언트 ↔ 서버 ↔ 증권사 | 증권사 계좌 연동, 동기화 처리 |
+| `actions/trades.ts` | 클라이언트 ↔ 서버 | 매매 내역 통합 조회 |
+| `actions/alerts.ts` | 클라이언트 ↔ 서버 | 알람 규칙 CRUD |
+| `actions/reviews.ts` | 서버 → 클라이언트 | Vercel AI SDK + Gemini API 기반 자동 복기 일지 생성 |
+| `actions/dashboard.ts` | 서버 → 클라이언트 | 대시보드 통계 집계 |
+| `Supabase Realtime` | DB → 클라이언트 (WS) | 실시간 뇌동매매 알람 스트리밍 구독 |
+| `/api/cron/sync` | Vercel Cron → Route Handler | 주기적 증권사 데이터 동기화 및 감시 트리거 |
 
 ### 3.4 Interaction Sequences (핵심 시퀀스 다이어그램)
 
@@ -263,26 +251,24 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-    participant U as 사용자(웹앱)
-    participant S as 백엔드 서버
-    participant B as 증권사 API
-    participant P as 푸시 서비스(FCM/APNs)
+    participant U as 사용자(클라이언트)
+    participant S as Next.js Server Actions
+    participant B as 증권사 REST API
+    participant DB as Supabase DB
 
-    U->>S: 일일 최대 손실폭 설정 (0.5%~30%)
-    S->>S: ALERT_RULE 저장
-    S-->>U: 설정 완료 확인
+    U->>S: 일일 최대 손실폭 설정 (Server Action)
+    S->>DB: ALERT_RULE 저장
 
-    loop 장중 실시간 모니터링
+    loop 주기적 감시 (클라이언트 활성 시 폴링)
+        U->>S: 손익 상태 폴링
         S->>B: 잔고/손익 조회
         B-->>S: 현재 손익 데이터
         S->>S: 누적 손실 vs 임계치 비교
     end
 
     alt 누적 손실 ≥ 임계치
-        S->>P: 팩트폭행 알람 발송 요청
-        P-->>U: 푸시 알림 (≤ 3초)
-        S-->>U: SSE 모달 알람 표시
-        S->>S: ALERT_LOG 기록 + 쿨타임(30분) 시작
+        S->>DB: ALERT_LOG 기록 + 쿨타임(30분) 시작
+        S-->>U: 팩트폭행 알람 (이메일 발송 + 즉각 모달 표시)
         U->>S: 추가 매수 시도
         S-->>U: 매수 버튼 비활성화 (쿨타임 잔여 시간 표시)
     end
@@ -290,8 +276,6 @@ sequenceDiagram
     alt 증권사 API 장애 (AC-E1)
         B--xS: 응답 실패/타임아웃
         S-->>U: "데이터 수신 지연" 배너 표시
-        S->>S: 마지막 정상 값 기준 보수적 알람 유지
-        Note over S: 장애 5분 이상 시 PagerDuty 알림
     end
 ```
 
@@ -299,29 +283,22 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant SCH as 스케줄러
-    participant S as 백엔드 서버
-    participant B as 증권사 API
-    participant N as 매크로 뉴스 API
+    participant CRON as Vercel Cron (1/day)
+    participant S as Next.js Route Handler
+    participant B as 증권사 REST API
+    participant DB as Supabase DB
     participant U as 사용자(웹앱)
 
-    SCH->>S: 장 마감 후 일지 생성 트리거
+    CRON->>S: 장 마감 후 일지 생성 트리거 (일 1회)
     S->>B: 당일 체결 내역 조회
     B-->>S: 매매 데이터
 
     alt 매매 건수 = 0 (AC-E1)
-        S-->>U: "오늘 매매 내역이 없습니다" 안내 카드
+        S->>DB: 빈 일지 기록 안함 (스킵)
     else 매매 건수 ≥ 1
-        S->>N: 당일 매크로 뉴스 조회
-        alt 뉴스 API 정상
-            N-->>S: 뉴스 이벤트 목록
-            S->>S: 타점-뉴스 매칭 (정확도 ≥ 95%)
-        else 뉴스 API 실패 (AC-E2)
-            N--xS: 타임아웃 (> 10초)
-            S->>S: 뉴스 영역 "수집 실패" 처리
-        end
-        S->>S: TRADE_REVIEW 생성 (≤ 30분)
-        S-->>U: 복기 일지 준비 완료 알림
+        S->>S: 매매 내역 + 뉴스 데이터 규칙 기반 매칭 (LLM 배제)
+        S->>DB: TRADE_REVIEW 저장 (JSON)
+        S-->>U: 복기 일지 준비 완료 알림 (이메일)
         U->>S: 복기 화면 오픈
         S-->>U: 핵심 인사이트 UI (3분 내 스캔)
     end
@@ -331,17 +308,18 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant U as 사용자(웹앱)
-    participant S as 백엔드 서버
-    participant B as 증권사 API
+    participant U as 사용자(클라이언트)
+    participant S as Next.js Server Action
+    participant B as 증권사 REST API
+    participant DB as Supabase DB
 
-    U->>S: 온보딩 진입, 증권사 선택
+    U->>S: 온보딩 진입, 증권사(한국투자 등) 선택
     U->>S: 인증 정보 제출
 
     alt 인증 정보 유효
         S->>B: OAuth/인증 키 검증
         B-->>S: 인증 성공
-        S->>S: ACCOUNT 생성, 토큰 AES-256 암호화 저장
+        S->>DB: ACCOUNT 생성, 토큰 암호화 저장
         S-->>U: 연동 완료 (≤ 60초)
     else 인증 정보 무효 (AC-E1)
         S-->>U: "인증 정보가 유효하지 않습니다" + 재시도 (최대 3회)
@@ -350,10 +328,11 @@ sequenceDiagram
         S-->>U: "[증권사명] 서버 점검 중" + 나머지 정상 진행
     end
 
-    loop 자동 동기화 (5분 주기)
+    loop 실시간 동기화 (클라이언트 폴링/새로고침)
+        U->>S: 데이터 동기화 요청
         S->>B: 신규 매매 내역 조회
         B-->>S: 체결 데이터
-        S->>S: TRADE 저장 (누락률 < 0.1%)
+        S->>DB: TRADE 저장 (누락률 < 0.1%)
     end
 ```
 
@@ -369,16 +348,16 @@ sequenceDiagram
 |---|---|---|---|---|
 | REQ-FUNC-001 | 시스템은 사용자가 일일 최대 손실폭을 슬라이더(0.5%~30%)로 설정할 수 있는 인터페이스를 제공해야 한다. | Story 1 | Must | **Given** 사용자가 알람 설정 화면에 진입, **When** 슬라이더로 손실폭 선택 후 저장, **Then** ALERT_RULE 생성 + 확인 메시지 표시. |
 | REQ-FUNC-002 | 시스템은 0.5% 미만 또는 30% 초과 값 입력 시 즉시 거부하고 인라인 에러 메시지를 표시해야 한다. | Story 1 (AC-E2) | Must | **Given** 손실폭 입력 시, **When** 범위 외 값 입력, **Then** 입력 거부 + 인라인 에러 표시. 우회율 0%. |
-| REQ-FUNC-003 | 시스템은 장중 실시간으로 누적 손실을 모니터링하고, 임계치 도달 시 3초 이내 팩트폭행 알람(푸시+모달)을 발동해야 한다. | Story 1 (AC1) | Must | **Given** 손실폭 설정 상태, **When** 누적 손실 >= 설정값, **Then** 3초 이내 푸시+모달 발동. 실패율 < 0.5%. |
+| REQ-FUNC-003 | 시스템은 클라이언트 폴링 방식으로 누적 손실을 모니터링하고, 임계치 도달 시 이메일 발송 및 인앱 모달 형태의 팩트폭행 알람을 발동해야 한다. | Story 1 (AC1) | Must | **Given** 손실폭 설정 상태, **When** 누적 손실 >= 설정값, **Then** 이메일 및 모달 통해 즉각 알람 발동. |
 | REQ-FUNC-004 | 알람 발동 후 최소 30분 쿨타임 동안 매수 버튼을 비활성화해야 한다. | Story 1 (AC2) | Must | **Given** 알람 발동, **When** 쿨타임 내 매수 시도, **Then** 매수 버튼 비활성화 + 잔여 시간 표시. 우회율 < 1%. |
-| REQ-FUNC-005 | 주간 종료 시 뇌동매매 리포트(계획외 매매 횟수·손실액)를 자동 생성·발송해야 한다. | Story 1 (AC3) | Must | **Given** 주간 종료, **When** 리포트 생성 실행, **Then** 자동 집계 리포트 발송. 정확도 >= 99%. |
+| REQ-FUNC-005 | 주간 종료 시 뇌동매매 리포트(계획외 매매 횟수·손실액)를 일일 Cron을 활용해 자동 생성하고 이메일로 발송해야 한다. | Story 1 (AC3) | Must | **Given** 주말 시점, **When** Vercel 일일 Cron 트리거, **Then** 자동 집계 리포트 이메일 발송. 정확도 >= 99%. |
 | REQ-FUNC-006 | 증권사 API 장애 시 데이터 수신 지연 배너 + 마지막 정상 값 기준 보수적 알람 유지. 장애 5분 이상 시 PagerDuty 알림. | Story 1 (AC-E1) | Must | **Given** API 장애, **When** 손실폭 계산 실패, **Then** 배너 표시 + 폴백 알람 10초 이내. 장애 미통지율 0%. |
 
 #### 4.1.2 F2 — 멀티 증권사 API 통합 연동
 
 | ID | 요구사항 | Source | Priority | Acceptance Criteria |
 |---|---|---|---|---|
-| REQ-FUNC-007 | 온보딩에서 키움·토스·NH 증권사 선택 및 OAuth/인증 키 계좌 연동. 소요 시간 60초 이내. | Story 3 (AC1) | Must | **Given** 온보딩 진입, **When** 증권사 선택 후 인증 제출, **Then** 60초 이내 연동 완료. 성공률 >= 98%. |
+| REQ-FUNC-007 | 온보딩에서 한국투자·토스·LS 증권사 선택 및 OAuth/인증 키 계좌 연동. 소요 시간 60초 이내. | Story 3 (AC1) | Must | **Given** 온보딩 진입, **When** 증권사 선택 후 인증 제출, **Then** 60초 이내 연동 완료. 성공률 >= 98%. |
 | REQ-FUNC-008 | 연동 완료 후 신규 매매 발생 시 5분 이내 자동 동기화. | Story 3 (AC2) | Must | **Given** 연동 완료, **When** 신규 매매 발생, **Then** 5분 이내 동기화. 누락률 < 0.1%. |
 | REQ-FUNC-009 | 복수 증권사 연동 시 전 계좌 합산 포지션·손익을 통합 대시보드에 표시. | Story 3 (AC3) | Must | **Given** 복수 증권사 연동, **When** 통합 대시보드 조회, **Then** 합산 표시. 정합성 >= 99.9%. |
 | REQ-FUNC-010 | 잘못된 인증 정보 시 2초 이내 에러 메시지 + 최대 3회 재시도 허용. | Story 3 (AC-E1) | Must | **Given** 무효 인증 정보, **When** 연동 인증 요청, **Then** 2초 이내 에러 + 3회 재시도. |
@@ -389,7 +368,7 @@ sequenceDiagram
 
 | ID | 요구사항 | Source | Priority | Acceptance Criteria |
 |---|---|---|---|---|
-| REQ-FUNC-013 | 장 마감 후 30분 이내 당일 매매 타점+차트+매크로 뉴스 매칭 자동 복기 일지 생성. | Story 2 (AC1) | Must | **Given** API 연동 완료, **When** 장 마감 후 30분 이내, **Then** TRADE_REVIEW 생성. 매칭 정확도 >= 95%. |
+| REQ-FUNC-013 | 규칙 기반 매칭 로직을 활용하여 장 마감 후 매매 타점+뉴스 자동 복기 일지 생성. (LLM은 인프라 구성만 진행) | Story 2 (AC1) | Must | **Given** 장 마감, **When** 일일 Cron 트리거 시, **Then** 자체 로직이 구조화된 리뷰 JSON 반환 및 저장. |
 | REQ-FUNC-014 | 복기 화면은 3분 이내 핵심 인사이트 스캔 가능한 UI 제공. | Story 2 (AC2) | Must | **Given** 일지 생성 완료, **When** 복기 화면 오픈, **Then** 3분 이내(p50) 스캔 가능. |
 | REQ-FUNC-015 | 주간 종합 복기 PDF를 10초 이내 생성·다운로드. | Story 2 (AC3) | Must | **Given** 주말 시점, **When** PDF 추출 요청, **Then** 10초 이내 생성. 실패율 < 1%. |
 | REQ-FUNC-016 | 당일 매매 0건 시 안내 카드 표시, 빈 일지 미생성. | Story 2 (AC-E1) | Must | **Given** 매매 0건, **When** 일지 트리거, **Then** 안내 카드만 표시. 빈 일지 오생성율 0%. |
@@ -401,7 +380,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | REQ-FUNC-018 | 대시보드에 승률·MDD·매매횟수 등 핵심 통계 시각화. 로딩 p95 <= 2초. | Story 4 (AC1) | Must | **Given** 대시보드 접속, **When** 로딩, **Then** 통계 시각화. 로딩 <= 2초 (p95, 동시 500명). |
 | REQ-FUNC-019 | 일일 매매 횟수 상한 설정 인터페이스 제공. | Story 4 | Must | **Given** 브레이크 설정 화면, **When** 상한 입력 저장, **Then** ALERT_RULE(trade_count_limit) 생성. |
-| REQ-FUNC-020 | 상한 도달 시 3초 이내 강제 휴식 알림 + 매매 쿨다운 적용. | Story 4 (AC2) | Must | **Given** 상한 설정, **When** 상한 도달, **Then** 3초 이내 알림 + 쿨다운. |
+| REQ-FUNC-020 | 상한 도달 시 강제 휴식 이메일 알림 및 모달 + 매매 쿨다운 적용. | Story 4 (AC2) | Must | **Given** 상한 설정, **When** 상한 도달, **Then** 이메일/모달 알림 + 쿨다운. |
 | REQ-FUNC-021 | 월말 시점 전월 대비 매매 횟수·충동 매매 비율 비교 월간 리포트 자동 생성. | Story 4 (AC3) | Must | **Given** 월말 시점, **When** 리포트 생성, **Then** 전월 대비 비교 리포트. 정확도 >= 99%. |
 | REQ-FUNC-022 | 30일 미만 신규 유저: 데이터 축적 중 (현재 N일치) 안내 + 가용 기간 한정 통계 표시. | Story 4 (AC-E1) | Must | **Given** 데이터 30일 미만, **When** 대시보드 조회, **Then** 안내 + 제한 통계. 빈 대시보드 에러율 0%. |
 
@@ -412,7 +391,7 @@ sequenceDiagram
 | ID | 요구사항 | 측정 조건 | Source |
 |---|---|---|---|
 | REQ-NF-001 | 대시보드 API p95 응답 <= 500ms | 동시 500명, k6 ramp-up 10분 | PRD S5 |
-| REQ-NF-002 | 알람 발동 p99 지연 <= 3초 | 동시 500명 | PRD S5, Story 1 |
+| REQ-NF-002 | 알람 감지 후 인앱 모달 노출 및 이메일 발송 요청 지연 <= 1초 | Next.js API | PRD S5, Story 1 |
 | REQ-NF-003 | 대시보드 페이지 로딩 p95 <= 2초 | 동시 500명 | Story 4 |
 | REQ-NF-004 | 증권사 동기화 지연 <= 5분 | 신규 매매 후 | Story 3 |
 | REQ-NF-005 | 계좌 연동 소요 <= 60초 | 최초 연동 시 | Story 3 |
@@ -425,7 +404,7 @@ sequenceDiagram
 | ID | 요구사항 | 측정 조건 | Source |
 |---|---|---|---|
 | REQ-NF-009 | 동시 2,000명까지 p95 <= 1초 유지 | SOM 5,000 x 피크 0.4 | PRD S5 |
-| REQ-NF-010 | SSE 연결당 메모리 < 1KB | 동시 2,000 연결 | ADR-002 |
+| REQ-NF-010 | 대규모 클라이언트 폴링 접속 처리 | 동시 2,000 연결 지원 | C-TEC-006 |
 
 #### 4.2.3 가용성 / 신뢰성 (Availability / Reliability)
 
@@ -447,7 +426,7 @@ sequenceDiagram
 | REQ-NF-017 | API 토큰 AES-256 at-rest 암호화 | 모든 encrypted_token | PRD S5, ADR-003 |
 | REQ-NF-018 | 전 API 통신 TLS 1.3 in-transit 암호화 | 전체 HTTP 트래픽 | PRD S5 |
 | REQ-NF-019 | OAuth 2.0 PKCE 인증 프로토콜 | 인증 흐름 전체 | PRD S5 |
-| REQ-NF-020 | Row-Level Security 사용자별 데이터 격리 | PostgreSQL RLS | ADR-003 |
+| REQ-NF-020 | Row-Level Security 사용자별 데이터 격리 | Supabase RLS | C-TEC-003 |
 | REQ-NF-021 | 분기 1회 3rd-party 침투 테스트 | 외부 보안 업체 | PRD S5 |
 | REQ-NF-022 | 연 1회 ISMS 갱신 심사 | 인증 기관 | PRD S5 |
 | REQ-NF-023 | RBAC 관리자/일반 사용자 권한 분리 | 전체 API 엔드포인트 | ISO 29148 |
@@ -457,7 +436,7 @@ sequenceDiagram
 
 | ID | 요구사항 | 측정 조건 | Source |
 |---|---|---|---|
-| REQ-NF-024 | 사용자당 월 인프라 비용 <= 5,000원 | AWS Cost Explorer 월간 | PRD S5 |
+| REQ-NF-024 | Vercel Hobby (무료) 플랜 한도 내 아키텍처 구현 | Vercel Hobby 티어 | PRD S5 |
 | REQ-NF-025 | 인프라 마진 >= 90% | 구독 매출 대비 | PRD S5 |
 
 #### 4.2.6 운영 / 모니터링 (Observability)
@@ -474,7 +453,7 @@ sequenceDiagram
 
 | ID | 요구사항 | 측정 조건 | Source |
 |---|---|---|---|
-| REQ-NF-031 | SSE 전송 계층 추상화 (Phase 2 WebSocket 마이그레이션 대비) | 인터페이스 분리 설계 검증 | ADR-002 |
+| REQ-NF-031 | 단일 레포지토리(Next.js) 내 모듈화 및 컴포넌트 재사용성 극대화 | Server Actions 응집도 검증 | C-TEC-001 |
 | REQ-NF-032 | 신규 증권사 어댑터 패턴 확장 (기존 코드 변경 없이) | 4순위 증권사 추가 시 측정 | ADR-001 |
 
 #### 4.2.8 비즈니스 KPI
@@ -547,7 +526,7 @@ sequenceDiagram
 | 12 | PUT | /api/v1/alerts/rules/{id} | 알람 규칙 수정 | Bearer | 10/분 |
 | 13 | DELETE | /api/v1/alerts/rules/{id} | 알람 규칙 삭제 | Bearer | 10/분 |
 | 14 | GET | /api/v1/alerts/logs | 알람 발동 이력 조회 | Bearer | 60/분 |
-| 15 | GET | /sse/alerts | 실시간 알람 SSE 스트림 | Bearer | 1 연결/유저 |
+| 15 | POST | /api/v1/alerts/email | 알람 이력에 따른 이메일 전송 | Bearer | 10/분 |
 | 16 | GET | /api/v1/reviews | 복기 일지 목록 조회 | Bearer | 60/분 |
 | 17 | GET | /api/v1/reviews/{id} | 복기 일지 상세 조회 | Bearer | 60/분 |
 | 18 | POST | /api/v1/reviews/{id}/tag | 뉴스 수동 태깅 | Bearer | 30/분 |
@@ -575,7 +554,7 @@ sequenceDiagram
 |---|---|---|---|
 | id | UUID (PK) | NOT NULL, UNIQUE | 계좌 고유 식별자 |
 | user_id | UUID (FK -> USER.id) | NOT NULL | 소유 사용자 |
-| broker_name | ENUM('kiwoom','toss','nh') | NOT NULL | 증권사명 |
+| broker_name | ENUM('korea_investment','toss','ls') | NOT NULL | 증권사명 |
 | encrypted_token | BYTEA | NOT NULL | AES-256 암호화 토큰 |
 | status | ENUM('active','inactive','error') | NOT NULL | 연동 상태 |
 | last_synced_at | TIMESTAMP | NULLABLE | 마지막 동기화 시점 |
@@ -605,7 +584,7 @@ sequenceDiagram
 | trade_count | INTEGER | NOT NULL, >= 0 | 매매 건수 |
 | summary_json | JSONB | NOT NULL | 핵심 인사이트 구조화 데이터 |
 | news_matched | BOOLEAN | NOT NULL | 뉴스 매칭 성공 여부 |
-| pdf_url | VARCHAR(512) | NULLABLE | S3 PDF 경로 |
+| pdf_url | VARCHAR(512) | NULLABLE | Supabase Storage PDF 경로 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성 일시 |
 
 #### ALERT_RULE
@@ -806,22 +785,25 @@ classDiagram
         +matchTrades(trades) List~Trade~
     }
 
-    class AlertEngine {
-        +monitorLossLimit(user) void
-        +monitorTradeCount(user) void
-        +triggerAlarm(rule, value) AlertLog
+    class AlertCronHandler {
+        <<Route Handler>>
+        +handleCronTrigger() void
+        +evaluateAllRules() void
+        +writeAlertLog(rule, value) AlertLog
         +startCooldown(rule) void
     }
 
-    class SyncScheduler {
-        +syncAll() void
+    class SyncCronHandler {
+        <<Route Handler>>
+        +handleCronSync() void
         +syncAccount(account) List~Trade~
         +handleApiFailure(broker) void
     }
 
-    class ReviewGenerator {
+    class ReviewServerAction {
+        <<Server Action + Vercel AI SDK>>
         +generateDailyReview(user, date) TradeReview
-        +matchMacroEvents(trades) List~MacroEvent~
+        +callGeminiAPI(trades, news) JSON
         +generateWeeklyPdf(user) byte[]
     }
 
@@ -832,13 +814,13 @@ classDiagram
     AlertRule "1" --> "*" AlertLog : triggers
     Trade "*" --> "*" MacroEvent : matched with
     Trade "*" --> "1" TradeReview : reviewed in
-    AlertEngine --> AlertRule : evaluates
-    AlertEngine --> AlertLog : creates
-    SyncScheduler --> Account : syncs
-    SyncScheduler --> Trade : persists
-    ReviewGenerator --> Trade : analyzes
-    ReviewGenerator --> MacroEvent : matches
-    ReviewGenerator --> TradeReview : creates
+    AlertCronHandler --> AlertRule : evaluates
+    AlertCronHandler --> AlertLog : creates
+    SyncCronHandler --> Account : syncs
+    SyncCronHandler --> Trade : persists
+    ReviewServerAction --> Trade : analyzes
+    ReviewServerAction --> MacroEvent : matches
+    ReviewServerAction --> TradeReview : creates
 ```
 
 ### 6.3 Detailed Interaction Models
@@ -847,12 +829,11 @@ classDiagram
 
 ```mermaid
 sequenceDiagram
-    participant U as 사용자(웹앱)
-    participant S as 백엔드 서버
-    participant DB as PostgreSQL
-    participant P as 푸시 서비스
+    participant U as 사용자(클라이언트)
+    participant S as Next.js Server Action
+    participant DB as Supabase DB
 
-    U->>S: GET /api/v1/dashboard/stats
+    U->>S: 대시보드 통계 요청 (Server Action)
     S->>DB: 승률, MDD, 매매횟수 집계 쿼리
     
     alt 데이터 >= 30일
@@ -863,65 +844,64 @@ sequenceDiagram
         S-->>U: 데이터 축적 중 (현재 N일치) + 제한 통계
     end
 
-    U->>S: POST /api/v1/alerts/rules (type=trade_count_limit)
+    U->>S: 매매횟수 상한 설정 (Server Action)
     S->>DB: ALERT_RULE 저장
     S-->>U: 설정 완료
 
-    loop 장중 매매 횟수 모니터링
+    loop 장중 매매 횟수 모니터링 (클라이언트 폴링)
+        U->>S: 매매 횟수 조회
         S->>DB: 당일 매매 횟수 카운트
         alt 횟수 >= 상한
-            S->>P: 강제 휴식 알림 발송
-            P-->>U: 알림 (3초 이내)
-            S-->>U: SSE 매매 쿨다운 표시
             S->>DB: ALERT_LOG 기록
+            S-->>U: 강제 휴식 모달 표시 + 이메일 알림 + 쿨다운
         end
     end
 
-    Note over S: 월말 시점
+    Note over S: 월말 시점 (일일 Vercel Cron 활용)
     S->>DB: 전월 대비 매매 횟수/충동 매매 비율 집계
     S->>S: 월간 리포트 생성 (정확도 >= 99%)
-    S-->>U: 월간 리포트 알림
+    S-->>U: 월간 리포트 이메일 알림
 ```
 
 #### 6.3.2 온보딩 → 증권사 연동 → 첫 복기 일지 E2E 흐름
 
 ```mermaid
 sequenceDiagram
-    participant U as 사용자(웹앱)
-    participant S as 백엔드 서버
-    participant B as 증권사 API
-    participant N as 매크로 뉴스 API
-    participant SCH as 스케줄러
+    participant U as 사용자(클라이언트)
+    participant S as Next.js Server Action
+    participant B as 증권사 REST API
+    participant DB as Supabase DB
+    participant CRON as Vercel Cron (1/day)
 
     rect rgb(240,248,255)
         Note over U,S: Phase 1: 온보딩 + 연동
-        U->>S: POST /api/v1/auth/signup
-        S-->>U: 회원가입 완료
-        U->>S: POST /api/v1/accounts (broker=kiwoom)
+        U->>S: 회원가입 (Supabase Auth)
+        S-->>U: 가입 완료
+        U->>S: 증권사 연동 요청 (broker=korea_investment)
         S->>B: OAuth 인증 검증
         B-->>S: 인증 성공
-        S->>S: 토큰 AES-256 암호화 저장
+        S->>DB: ACCOUNT 생성 + 토큰 암호화 저장
         S-->>U: 계좌 연동 완료 (60초 이내)
     end
 
     rect rgb(255,248,240)
         Note over U,S: Phase 2: 데이터 동기화
-        loop 5분 주기
+        loop 클라이언트 중심 동기화
+            U->>S: 동기화 요청 (앱 오픈/폴링)
             S->>B: 체결 내역 조회
             B-->>S: 매매 데이터
-            S->>S: TRADE 저장 (누락률 < 0.1%)
+            S->>DB: TRADE 저장 (누락률 < 0.1%)
         end
     end
 
     rect rgb(240,255,240)
-        Note over U,S: Phase 3: 자동 복기
-        SCH->>S: 장 마감 후 트리거
+        Note over U,S: Phase 3: 자동 복기 일지
+        CRON->>S: 장 마감 후 복기 트리거
         S->>B: 당일 체결 내역 최종 조회
-        S->>N: 매크로 뉴스 조회
-        N-->>S: 뉴스 이벤트
-        S->>S: 타점-뉴스 매칭 + TRADE_REVIEW 생성
-        S-->>U: 복기 일지 준비 알림
-        U->>S: GET /api/v1/reviews/{id}
+        S->>S: 매매 내역 + 뉴스 자체 매칭 (LLM 배제)
+        S->>DB: TRADE_REVIEW 저장
+        S-->>U: 이메일 알림 (복기 일지 준비 완료)
+        U->>S: 복기 일지 상세 조회
         S-->>U: 핵심 인사이트 UI (3분 내 복기)
     end
 ```
@@ -930,38 +910,39 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant U as 사용자(웹앱)
-    participant S as 백엔드 서버
-    participant B as 증권사 API
-    participant P as 푸시 서비스
+    participant U as 사용자(클라이언트)
+    participant S as Next.js Server Action
+    participant B as 증권사 REST API
+    participant DB as Supabase DB
+    participant CRON as Vercel Cron
 
     Note over U,S: Day 1~5: 장중 모니터링
-    U->>S: 일일 최대 손실폭 -5% 설정
-    S->>S: ALERT_RULE(type=loss_limit, threshold=5.0) 저장
+    U->>S: 일일 최대 손실폭 -5% 설정 (Server Action)
+    S->>DB: ALERT_RULE(type=loss_limit, threshold=5.0) 저장
 
-    loop 매 거래일 장중
-        S->>B: 실시간 잔고/손익 조회
+    loop 매 거래일 장중 (클라이언트 폴링)
+        U->>S: 상태 폴링
+        S->>B: 잔고/손익 조회
         B-->>S: 손익 데이터
         S->>S: 누적 손실 계산
 
         alt 누적 손실 >= 5%
-            S->>P: 팩트폭행 알람 발송
-            P-->>U: 푸시 + 모달 (3초 이내)
-            S->>S: ALERT_LOG 기록 + 쿨타임 시작
+            S->>DB: ALERT_LOG 기록 + 쿨타임 시작
+            S-->>U: 팩트폭행 모달 및 이메일 발송
             Note over U: 30분 매수 차단
         end
 
         alt 당일 매매 is_planned=false 발생
-            S->>S: 계획외 매매로 태깅
+            S->>DB: 계획외 매매로 태깅
         end
     end
 
-    Note over S: 주간 종료 (금요일 장 마감 후)
-    S->>S: unplanned_trade_count 집계
-    S->>S: weekly_loss_amount 집계
+    Note over CRON: 주간 종료 (금요일 장 마감 후 Cron)
+    CRON->>S: 주간 리포트 생성 트리거
+    S->>DB: unplanned_trade_count 집계
+    S->>DB: weekly_loss_amount 집계
     S->>S: 주간 뇌동매매 리포트 생성 (정확도 >= 99%)
-    S-->>U: 리포트 이메일/인앱 발송
-    S->>S: Mixpanel 이벤트 전송 (unplanned_trade_count)
+    S-->>U: 리포트 이메일 발송
 ```
 
 ### 6.4 Validation Plan
@@ -975,5 +956,5 @@ sequenceDiagram
 
 ---
 
-> **문서 끝** — SRS-001 v1.0 | ISO/IEC/IEEE 29148:2018 준수
+> **문서 끝** — SRS-001 v1.1 | ISO/IEC/IEEE 29148:2018 준수 | Next.js + Supabase + Vercel AI SDK 기반 MVP
 
